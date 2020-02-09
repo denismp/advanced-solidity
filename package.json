@@ -1,0 +1,19 @@
+{
+  "name": "advanced-solidity",
+  "version": "1.0.0",
+  "description": "In this lesson, we learned about functions, modifiers, events, contracts, interactions, error handling and libraries in Solidity programming language.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/denismp/advanced-solidity.git"
+  },
+  "author": "Denis Putnam",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/denismp/advanced-solidity/issues"
+  },
+  "homepage": "https://github.com/denismp/advanced-solidity#readme"
+}
