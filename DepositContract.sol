@@ -76,14 +76,14 @@ contract DepositContract is Owned {
     }
 
     /// @author Denis M. Putnam
-    /// @notice default fallback function the calls the deposit function.
+    /// @notice default fallback function that the calls the deposit function.
     /// @dev No Extra details.
     fallback() external payable depositBy(){
         deposit();
     }
 
     /// @author Denis M. Putnam
-    /// @notice receive function the calls the deposit function.
+    /// @notice receive function that the calls the deposit function.
     /// @dev The 0.6.x compiler gives a warning if this is not defined.
     receive() external payable depositBy(){
         deposit();
