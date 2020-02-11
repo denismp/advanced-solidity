@@ -39,8 +39,18 @@ contract Owned {
     }
 }
 
+/// @title Problem 2.	SafeMath
+/// @author Denis M. Putnam
+/// @notice This contract provides add, subtract, and multiply of int256 values.
+/// @dev Use at your own risk
 contract SafeMath {
 
+    /// @author Denis M. Putnam
+    /// @notice Add two int256 values.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
+    /// @param a int256 value
+    /// @param b int256 value
+    /// @return an int256 sum.
     function add(int256 a, int256 b) external pure returns(int256) {
         uint256 _a = uint256(a);
         uint256 _b = uint256(b);
@@ -49,6 +59,12 @@ contract SafeMath {
         return a + b;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Subtract two int256 values.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
+    /// @param a int256 value
+    /// @param b int256 value
+    /// @return an int256 difference.
     function subtract(int256 a, int256 b) external pure returns(int256) {
         uint256 _a = uint256(a);
         uint256 _b = uint256(b);
@@ -57,6 +73,12 @@ contract SafeMath {
         return a - b;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Multiply two int256 values.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
+    /// @param a int256 value
+    /// @param b int256 value
+    /// @return an int256 multiplication value.
     function multiply(int256 a, int256 b) external pure returns(int256) {
         uint256 _a = uint256(a);
         uint256 _b = uint256(b);
@@ -66,6 +88,10 @@ contract SafeMath {
     }
 }
 
+/// @title Problem 2.	InheritSafeMath
+/// @author Denis M. Putnam
+/// @notice This contract provides add, subtract, and multiply of int256 values.
+/// @dev Use at your own risk
 contract InheritSafeMath is Owned, SafeMath {
     int256 private state = 0;
     uint256 private lastChangedTime = 1;
@@ -91,22 +117,39 @@ contract InheritSafeMath is Owned, SafeMath {
     //     return rVal;
     // }
 
+    /// @author Denis M. Putnam
+    /// @notice Increment by now % 256
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
     function increment() public ownerOnly() lastTimeModifier() {
         state = this.add(state, int256(now) % 256); 
     }
 
-    function multiply(int256 amountOfSeconds) public ownerOnly() lastTimeModifier() {
-        state = this.multiply(state, this.add(int256(lastChangedTime),amountOfSeconds)); 
+    /// @author Denis M. Putnam
+    /// @notice Multiply the state by the amount seconds since the last state change.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
+    function multiply() public ownerOnly() lastTimeModifier() {
+        state = this.multiply(state, this.subtract(int256(lastChangedTime),int256(now))); 
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Subtract the state by the block.gaslimit.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
     function subtract() public ownerOnly() lastTimeModifier() {
         state = this.subtract(state, int256(block.gaslimit)); 
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the current state value.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
+    /// @return currentState
     function getCurrentState() view public returns (int256 currentState) {
         return state; 
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the last time the state was changed.
+    /// @dev I have attempted to make this function prevent overflow, but we will see in the next session
+    /// @return lastTimeChanged
     function getLastTimeChanged() view public returns (uint256 lastTimeChanged) {
         return lastChangedTime; 
     }
