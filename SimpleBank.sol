@@ -40,7 +40,8 @@ contract Owned {
 }
 
 contract SimpleBank is Owned {
-    // TODO make a transaction event.
+    event DepositEvent(address payable who, uint256 deposit);
+    event WithdrawEvent(address payable who, uint256 debit);
     
     /// @notice User struct of from, balance, and flag.
     struct User {
@@ -55,7 +56,7 @@ contract SimpleBank is Owned {
 
     /// @author Denis M. Putnam
     /// @notice This modifier ensures that the user has been added.
-    /// @dev emit the DepositEvent
+    /// @dev No further details.
     modifier toAddressModifier(address payable to) {
         if(!users[to].flag) {
             users[to].to = to;
@@ -67,8 +68,8 @@ contract SimpleBank is Owned {
     }
 
     /// @author Denis M. Putnam
-    /// @notice This modifier ensures 
-    /// @dev emit the DepositEvent
+    /// @notice This modifier validate the edge/corner cases.
+    /// @dev No further details.
     modifier fromAddressModifier() {
         require(users[msg.sender].flag, "User does not exist in this contract.  A deposit to the msg.sender must be made");        
         require(msg.sender == users[msg.sender].to, "msg.sender does not match the to address" );
@@ -77,18 +78,33 @@ contract SimpleBank is Owned {
         _;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Deposit to the given address
+    /// @dev No further details.
+    /// @param to payable address
+    /// @return balance that is current.
     function deposit(address payable to) public payable toAddressModifier(to) returns(uint256 balance) {
         require(users[to].balance + msg.value > users[to].balance, "deposit will cause an overflow");
         users[to].balance += msg.value;
+        emit DepositEvent(to, msg.value);
         return users[to].balance;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Withdraw from the msg.sender's balance via msg.value.
+    /// @dev No further details.
+    /// @return balance that is current.
     function withdraw() public payable fromAddressModifier() returns (uint256 balance) {
         users[msg.sender].balance -= msg.value; 
         msg.sender.transfer(msg.value);
+        emit WithdrawEvent(msg.sender, msg.value);
         return users[msg.sender].balance;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the msg.sender's balance
+    /// @dev No further details.
+    /// @return balance that is current.
     function getBalance() public view returns (uint256 balance) {
         return users[msg.sender].balance;
     }
