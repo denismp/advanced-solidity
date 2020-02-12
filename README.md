@@ -11,3 +11,35 @@ o	Upon sending, the contract self-destructs with the total amount in the contrac
 Use modifiers where it is appropriate.
 Add appropriate events for the functions.
 
+Problem 2.	Inheritance
+Write a SafeMath contract (don’t google for the solution!)
+•	The contract has methods to safely add, subtract and multiply two numbers
+•	The methods should throw if an integer overflow occurs!
+Write an Owned contract
+•	Which knows its owner
+•	Has method to change the owner (called from current owner)
+•	Implements an access modifier
+Write a contract that inherits SafeMath and Owned and uses their methods
+•	The contract should hold one int256 state variable
+•	Has a method to change the state variable automatically by these rules:
+o	Method is called by the owner
+o	The state is incremented by now % 256
+o	The state is multiplied by the amount of seconds since the last state change (initially 1)
+o	The current block gas limit is subtracted from the state
+
+Problem 3.	Simple Bank
+Create a simple Bank contract which:
+•	holds balances of users
+•	holds the owner of the contract
+•	function deposit – user deposits ether to the bank
+o	method must be payable
+o	use require to validate corner cases (e.g. overflow)
+o	return the balance of the user
+•	 function withdraw(amount) – user withdraws ether from the bank
+o	use require to validate corner cases
+o	use msg.sender.transfer
+o	return the new balance of the user
+•	function getBalance – returns the caller's balance
+Use modifiers where it is appropriate.
+Add appropriate events for the functions.
+
