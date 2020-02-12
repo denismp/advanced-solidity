@@ -9,7 +9,7 @@ contract Owned {
 
     /// @author Denis M. Putnam
     /// @notice This modifier ensures that only the owner can call the funtion.
-    /// @dev emit the DepositEvent
+    /// @dev No other details
     modifier ownerOnly() {
         require(msg.sender == owner,"Only the owner of the contract can execute this function.");
         _;
@@ -44,6 +44,7 @@ contract Owned {
 /// @notice This contract provides add, subtract, and multiply of int256 values.
 /// @dev Use at your own risk
 contract SafeMath {
+    uint256 constant private _max = 2**256 - 1;
 
     /// @author Denis M. Putnam
     /// @notice Add two int256 values.
@@ -54,7 +55,6 @@ contract SafeMath {
     function add(int256 a, int256 b) external pure returns(int256) {
         uint256 _a = uint256(a);
         uint256 _b = uint256(b);
-        uint256 _max = 2**256 - 1;
         require(_a + _b <= _max, "The value requested will cause an overflow condition.");
         return a + b;
     }
@@ -68,7 +68,6 @@ contract SafeMath {
     function subtract(int256 a, int256 b) external pure returns(int256) {
         uint256 _a = uint256(a);
         uint256 _b = uint256(b);
-        uint256 _max = 2**256 - 1;
         require(_a - _b <= _max, "The value requested will cause an overflow condition.");
         return a - b;
     }
@@ -82,7 +81,6 @@ contract SafeMath {
     function multiply(int256 a, int256 b) external pure returns(int256) {
         uint256 _a = uint256(a);
         uint256 _b = uint256(b);
-        uint256 _max = 2**256 - 1;
         require(_a * _b <= _max, "The value requested will cause an overflow condition.");
         return a * b;
     }
