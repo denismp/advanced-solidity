@@ -70,11 +70,11 @@ contract SimpleBank is Owned {
     /// @author Denis M. Putnam
     /// @notice This modifier validate the edge/corner cases.
     /// @dev No further details.
-    modifier fromAddressModifier() {
+    modifier fromAddressModifier(uint256 amount) {
         require(users[msg.sender].flag, "User does not exist in this contract.  A deposit to the msg.sender must be made");        
         require(msg.sender == users[msg.sender].to, "msg.sender does not match the to address" );
-        require(users[msg.sender].balance >= msg.value, "Not enough balance to withdaw the given amount");
-        require(users[msg.sender].balance - msg.value < users[msg.sender].balance, "deposit will cause an overflow");
+        require(users[msg.sender].balance >= amount, "Not enough balance to withdaw the given amount");
+        require(users[msg.sender].balance - amount < users[msg.sender].balance, "deposit will cause an underflow");
         _;
     }
 
@@ -94,10 +94,10 @@ contract SimpleBank is Owned {
     /// @notice Withdraw from the msg.sender's balance via msg.value.
     /// @dev No further details.
     /// @return balance that is current.
-    function withdraw() public payable fromAddressModifier() returns (uint256 balance) {
-        users[msg.sender].balance -= msg.value; 
-        msg.sender.transfer(msg.value);
-        emit WithdrawEvent(msg.sender, msg.value);
+    function withdraw(uint256 amount) public payable fromAddressModifier(amount) returns (uint256 balance) {
+        users[msg.sender].balance -= amount; 
+        msg.sender.transfer(amount);
+        emit WithdrawEvent(msg.sender, amount);
         return users[msg.sender].balance;
     }
 
