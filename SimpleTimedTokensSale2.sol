@@ -46,8 +46,6 @@ contract Owned {
 contract SimpleTimedTokensSale2 is Owned{
     uint256 private originalBlockNumber;
     uint256 private amountTokensForSale;
-    bool private firstTime = true;
-    bool private timedOut = false;
 
     /// @notice User struct of from, balance, and flag.
     struct User {
@@ -85,22 +83,14 @@ contract SimpleTimedTokensSale2 is Owned{
     /// @dev No further details.
     function buyTokens(uint256 numTokens) public buyTokensModifier() {
         require(msg.sender != getCurrentOwner(),"You cannot be the owner to bid.");
-        require(timedOut == false,"Bidding has timed out");
         require(amountTokensForSale >= numTokens,"Purchase amount is greater than the number of tokens for sale");
         require(amountTokensForSale - numTokens <= amountTokensForSale, "The value requested will cause an overflow condition.");
         emit BlockInfoEvent(1, msg.sender, originalBlockNumber, block.number);
         require( originalBlockNumber >= block.number, "Block expired.");
-        if(originalBlockNumber >= block.number) {
-            users[msg.sender].amountTokensBought += numTokens;
-            amountTokensForSale -= numTokens;
-            emit BuyTokensEvent(msg.sender, numTokens);
-            emit BlockInfoEvent(2, msg.sender, originalBlockNumber, block.number);
-        } else {
-            emit BlockInfoEvent(1, msg.sender, originalBlockNumber, block.number);
-            timedOut = true;
-            // Bidding timed out.
-            emit TimeoutEvent(msg.sender, numTokens);
-        }
+        users[msg.sender].amountTokensBought += numTokens;
+        amountTokensForSale -= numTokens;
+        emit BuyTokensEvent(msg.sender, numTokens);
+        emit BlockInfoEvent(2, msg.sender, originalBlockNumber, block.number);
     }
 
     /// @author Denis M. Putnam
@@ -129,7 +119,7 @@ contract SimpleTimedTokensSale2 is Owned{
     }
 
     /// @author Denis M. Putnam
-    /// @notice Get time left
+    /// @notice Get the current blocknumber
     /// @dev No further details.
     /// @return currentBlockNumber
     function getBlockNumber() view public returns (uint256 currentBlockNumber) {
