@@ -43,3 +43,18 @@ o	return the new balance of the user
 Use modifiers where it is appropriate.
 Add appropriate events for the functions.
 
+Problem 4.	A Simple Timed Auction
+Write a  contract for an auction, which continues for 1 minute after the contract is deploye. Use block.timestamp as a start time.
+Contract stores:
+•	owner of the contract
+•	start time
+•	duration time
+•	stores each buyer's amount bought
+•	constructor with a parameter – tokens amount to sell
+•	function buyTokens(amount) – check whether the auction has ended
+Use modifiers where it is appropriate.
+Add appropriate events for the functions.
+
+Problem 5.	A Simple Timed Auction (2)
+Write a contract for an auction, which continues for 1 block after contract's creation.
+
