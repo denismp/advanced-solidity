@@ -42,6 +42,7 @@ contract Owned {
 contract HungerGames is Owned {
 
     enum Gender { Male, Female }
+    InsecureRandomGenerator rand = new InsecureRandomGenerator();
 
     /// @notice User struct of from, balance, and flag.
     struct User {
@@ -55,9 +56,9 @@ contract HungerGames is Owned {
     mapping(string => User) users; // map name => User
     mapping(uint256 => string) usersIndexMap; // index => name
 
-    function add(string memory name, uint256 age, uint256 gender) public {
+    function add(string memory name, uint256 gender) public {
         users[name].name = name;
-        users[name].age = age;
+        users[name].age = rand.pseudoRandom(12,18);
         users[name].gender = getGender(gender);
         users[name].flag = true;
     }
@@ -72,5 +73,17 @@ contract HungerGames is Owned {
         uint256 _age = users[name].age;
         uint256 _sex = uint256(users[name].gender);
         return (_player, _age, _sex);
+    }
+
+}
+
+contract InsecureRandomGenerator {
+    bytes32 public randseed;
+
+    function pseudoRandom(uint start, uint end) public returns (uint256) {
+        randseed = keccak256(abi.encodePacked( randseed, block.timestamp, block.coinbase, block.difficulty, block.number));
+        uint range = end - start + 1;
+        uint randVal = start + uint256(randseed) % range;
+        return randVal;    
     }
 }
