@@ -41,26 +41,33 @@ contract Owned {
 
 contract HungerGames is Owned {
 
+    uint private numPeople = 0;
     enum Gender { Male, Female }
     InsecureRandomGenerator rand = new InsecureRandomGenerator();
 
-    /// @notice User struct of from, balance, and flag.
-    struct User {
+    /// @notice Person struct of from, balance, and flag.
+    struct Person {
         string name;
         uint256 age;
         Gender gender;
         bool flag;
     }
 
-    /// @notice mapping of from addres to User.
-    mapping(string => User) users; // map name => User
-    mapping(uint256 => string) usersIndexMap; // index => name
+    /// @notice mapping of from addres to Person.
+    mapping(string => Person) persons; // map name => Person
+    mapping(uint256 => string) personsIndexMap; // index => name
 
-    function add(string memory name, uint256 gender) public {
-        users[name].name = name;
-        users[name].age = rand.pseudoRandom(12,18);
-        users[name].gender = getGender(gender);
-        users[name].flag = true;
+    function add(string memory boyName, string memory girlName) public {
+        persons[boyName].name = boyName;
+        persons[boyName].age = rand.pseudoRandom(12,18);
+        persons[boyName].gender = getGender(0);
+        persons[boyName].flag = true;
+        personsIndexMap[numPeople++] = boyName;
+        persons[girlName].name = girlName;
+        persons[girlName].age = rand.pseudoRandom(12,18);
+        persons[girlName].gender = getGender(1);
+        persons[girlName].flag = true;
+        personsIndexMap[numPeople++] = girlName;
     }
 
     function getGender(uint256 index) public pure returns(Gender) {
@@ -68,13 +75,33 @@ contract HungerGames is Owned {
         return Gender(index);
     }
 
-    function getPersonInfo(string memory name) public view returns (string memory, uint256, uint256) {
-        string memory _player = users[name].name;
-        uint256 _age = users[name].age;
-        uint256 _sex = uint256(users[name].gender);
+    function getPersonInfo(string memory name) public view returns (string memory _player, uint256 _age, uint256 _sex) {
+        _player = persons[name].name;
+        _age = persons[name].age;
+        _sex = uint256(persons[name].gender);
         return (_player, _age, _sex);
     }
 
+    function getNumberOfGirls() view public returns (uint256 numGirls) {
+        numGirls = 0;
+        for(uint i = 0; i < numPeople; i++) {
+            if(persons[personsIndexMap[i]].gender == Gender.Female) {
+                numGirls++;
+            }
+        }
+    }
+    function getNumberOfBoys() view public returns (uint256 numBoys) {
+        numBoys = 0;
+        for(uint i = 0; i < numPeople; i++) {
+            if(persons[personsIndexMap[i]].gender == Gender.Male) {
+                numBoys++;
+            }
+        }
+    }
+
+    function getNumberBoysAndGirls() public view returns(uint) {
+        return numPeople;
+    }
 }
 
 contract InsecureRandomGenerator {
