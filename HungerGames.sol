@@ -42,6 +42,10 @@ contract Owned {
 contract HungerGames is Owned {
 
     uint private numPeople = 0;
+    uint256 private startTime;
+    uint256 private endTime;
+    bool private timedOut = false;
+    uint private teamNumber;
     enum Gender { Male, Female }
     InsecureRandomGenerator rand = new InsecureRandomGenerator();
 
@@ -50,6 +54,7 @@ contract HungerGames is Owned {
         string name;
         uint256 age;
         Gender gender;
+        uint alive;
         bool flag;
     }
 
@@ -62,11 +67,13 @@ contract HungerGames is Owned {
         persons[boyName].age = rand.pseudoRandom(12,18);
         persons[boyName].gender = getGender(0);
         persons[boyName].flag = true;
+        persons[boyName].alive = 1;
         personsIndexMap[numPeople++] = boyName;
         persons[girlName].name = girlName;
         persons[girlName].age = rand.pseudoRandom(12,18);
         persons[girlName].gender = getGender(1);
         persons[girlName].flag = true;
+        persons[girlName].alive = 1;
         personsIndexMap[numPeople++] = girlName;
     }
 
@@ -101,6 +108,57 @@ contract HungerGames is Owned {
 
     function getNumberBoysAndGirls() public view returns(uint) {
         return numPeople;
+    }
+
+    function chooseTeam(uint team) public {
+       teamNumber = team;
+       startTime = now; 
+       endTime = startTime + 5 minutes;
+    }
+
+    event TimeoutEvent(uint team, string boyName, bool boyAlive, string girlName, bool girlAlive);
+
+    /// @author Denis M. Putnam
+    /// @notice This modifier checks for the team time out.
+    /// @dev dead or alive is reandomly determined.
+    modifier checkTeamTimeOutModifier() {
+       uint256 currentTime = now;
+        if(currentTime > startTime + endTime) {
+            timedOut = true;
+            string memory boyName;
+            string memory girlName;
+            bool boyAlive = true;
+            bool girlAlive = true;
+            if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
+                boyName =persons[personsIndexMap[teamNumber]].name;
+                persons[boyName].alive = rand.pseudoRandom(0,1);
+            } else {
+                girlName =persons[personsIndexMap[teamNumber]].name;
+                persons[girlName].alive = rand.pseudoRandom(0,1);
+            }
+            emit TimeoutEvent(teamNumber, boyName, boyAlive, girlName, girlAlive);
+        }
+        _;
+    }
+
+    function checkTeam() public checkTeamTimeOutModifier() returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
+        require(timedOut == true, "Clock is still ticking");
+        teamNum = teamNumber;
+        if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
+            boyName =persons[personsIndexMap[teamNumber]].name;
+            if(persons[boyName].alive == 0) {
+                boyAlive = false;
+            } else {
+                boyAlive = true;
+            }
+        } else {
+            girlName =persons[personsIndexMap[teamNumber]].name;
+            if(persons[girlName].alive == 0) {
+                girlAlive = false;
+            } else {
+                girlAlive = true;
+            }
+        }
     }
 }
 
