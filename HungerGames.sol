@@ -143,7 +143,28 @@ contract HungerGames is Owned {
 
     function checkTeam() public checkTeamTimeOutModifier() returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
         require(timedOut == true, "Clock is still ticking");
+        timedOut = false;
         teamNum = teamNumber;
+        if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
+            boyName =persons[personsIndexMap[teamNumber]].name;
+            if(persons[boyName].alive == 0) {
+                boyAlive = false;
+            } else {
+                boyAlive = true;
+            }
+        } else {
+            girlName =persons[personsIndexMap[teamNumber]].name;
+            if(persons[girlName].alive == 0) {
+                girlAlive = false;
+            } else {
+                girlAlive = true;
+            }
+        }
+    }
+
+    function checkTeamResults(uint team) public view returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
+        require(timedOut == true, "Clock is still ticking");
+        teamNum = team;
         if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
             boyName =persons[personsIndexMap[teamNumber]].name;
             if(persons[boyName].alive == 0) {
