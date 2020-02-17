@@ -41,11 +41,13 @@ contract Owned {
 
 contract HungerGames is Owned {
 
-    uint private numPeople = 0;
     uint256 private startTime;
     uint256 private endTime;
     bool private timedOut = false;
+    bool private chooseTeamFlag = true;
+    bool private checkTeamFlag = false;
     uint private teamNumber;
+    uint private teamCount = 0;
     enum Gender { Male, Female }
     InsecureRandomGenerator rand = new InsecureRandomGenerator();
 
@@ -58,23 +60,32 @@ contract HungerGames is Owned {
         bool flag;
     }
 
-    /// @notice mapping of from addres to Person.
-    mapping(string => Person) persons; // map name => Person
-    mapping(uint256 => string) personsIndexMap; // index => name
+    struct Team {
+        uint team;
+        Person male;
+        Person female;
+    }
+
+    mapping(uint256 => Team) private teams;
+
+    event AddTeamEvent(uint teamNum, string boyName, string girlName);
 
     function add(string memory boyName, string memory girlName) public {
-        persons[boyName].name = boyName;
-        persons[boyName].age = rand.pseudoRandom(12,18);
-        persons[boyName].gender = getGender(0);
-        persons[boyName].flag = true;
-        persons[boyName].alive = 1;
-        personsIndexMap[numPeople++] = boyName;
-        persons[girlName].name = girlName;
-        persons[girlName].age = rand.pseudoRandom(12,18);
-        persons[girlName].gender = getGender(1);
-        persons[girlName].flag = true;
-        persons[girlName].alive = 1;
-        personsIndexMap[numPeople++] = girlName;
+        teams[teamCount].male.name = boyName;
+        teams[teamCount].male.age = rand.pseudoRandom(12,18);
+        teams[teamCount].male.gender = getGender(0);
+        teams[teamCount].male.flag = true;
+        teams[teamCount].male.alive = 1;
+
+        teams[teamCount].female.name = girlName;
+        teams[teamCount].female.age = rand.pseudoRandom(12,18);
+        teams[teamCount].female.gender = getGender(1);
+        teams[teamCount].female.flag = true;
+        teams[teamCount].female.alive = 1;
+
+        teams[teamCount].team = teamCount;
+        emit AddTeamEvent(teamCount, teams[teamCount].male.name, teams[teamCount].female.name);
+        teamCount++;
     }
 
     function getGender(uint256 index) public pure returns(Gender) {
@@ -82,103 +93,118 @@ contract HungerGames is Owned {
         return Gender(index);
     }
 
-    function getPersonInfo(string memory name) public view returns (string memory _player, uint256 _age, uint256 _sex) {
-        _player = persons[name].name;
-        _age = persons[name].age;
-        _sex = uint256(persons[name].gender);
-        return (_player, _age, _sex);
-    }
-
-    function getNumberOfGirls() view public returns (uint256 numGirls) {
-        numGirls = 0;
-        for(uint i = 0; i < numPeople; i++) {
-            if(persons[personsIndexMap[i]].gender == Gender.Female) {
-                numGirls++;
+    function getPersonInfo(string memory name) public view returns (uint team, string memory _player, uint256 _age, Gender _sex, uint256 _alive) {
+        Person memory _male;
+        Person memory _female;
+        for(uint i = 0; i < teamCount; i++) {
+            _male = teams[i].male;
+            _female = teams[i].female;
+            if(keccak256(abi.encodePacked(_male.name)) == keccak256(abi.encodePacked(name))) {
+                _player = _male.name;
+                _age = _male.age;
+                _sex = _male.gender;
+                _alive = _male.alive;
+                return (i, _player, _age, _sex, _alive);
+            }
+            if(keccak256(abi.encodePacked(_female.name)) == keccak256(abi.encodePacked(name))) {
+                _player = _female.name;
+                _age = _female.age;
+                _sex = _female.gender;
+                _alive = _female.alive;
+                return (i, _player, _age, _sex, _alive);
             }
         }
     }
-    function getNumberOfBoys() view public returns (uint256 numBoys) {
-        numBoys = 0;
-        for(uint i = 0; i < numPeople; i++) {
-            if(persons[personsIndexMap[i]].gender == Gender.Male) {
-                numBoys++;
-            }
-        }
+
+    function getNumberOfTeams() public view returns(uint) {
+        return teamCount;
     }
 
-    function getNumberBoysAndGirls() public view returns(uint) {
-        return numPeople;
-    }
-
+    event ChooseTeamEvent(uint team, string boyName, string girlName, bool timedOut, bool chooseTeamFlag, bool checkTeamFlag);
+    
     function chooseTeam(uint team) public {
+       require(chooseTeamFlag == true, "You cannot choose a team yet");
        teamNumber = team;
        startTime = now; 
-       endTime = startTime + 5 minutes;
+       endTime = 5 minutes;
+       timedOut = false;
+       chooseTeamFlag = false;
+       checkTeamFlag = true;
+       string memory boyName = teams[team].male.name;
+       string memory girlName = teams[team].female.name;
+       emit ChooseTeamEvent(teamNumber, boyName, girlName, timedOut, chooseTeamFlag, checkTeamFlag);
     }
 
     event TimeoutEvent(uint team, string boyName, bool boyAlive, string girlName, bool girlAlive);
+    event TimeoutFlagEvent(bool timedOut);
 
     /// @author Denis M. Putnam
     /// @notice This modifier checks for the team time out.
     /// @dev dead or alive is reandomly determined.
-    modifier checkTeamTimeOutModifier() {
-       uint256 currentTime = now;
+    modifier checkTimeOutModifier() {
+        uint256 currentTime = now;
         if(currentTime > startTime + endTime) {
             timedOut = true;
-            string memory boyName;
-            string memory girlName;
-            bool boyAlive = true;
-            bool girlAlive = true;
-            if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
-                boyName =persons[personsIndexMap[teamNumber]].name;
-                persons[boyName].alive = rand.pseudoRandom(0,1);
-            } else {
-                girlName =persons[personsIndexMap[teamNumber]].name;
-                persons[girlName].alive = rand.pseudoRandom(0,1);
-            }
-            emit TimeoutEvent(teamNumber, boyName, boyAlive, girlName, girlAlive);
+            chooseTeamFlag = true;
+        } else {
+            timedOut = false;
+            chooseTeamFlag = false;
         }
+        emit TimeoutFlagEvent(timedOut);
         _;
     }
 
-    function checkTeam() public checkTeamTimeOutModifier() returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
+    function checkTeam() public checkTimeOutModifier() returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
+        //emit TimeoutFlagEvent(timedOut);
+        require(checkTeamFlag == true, "Team has not been chosen yet");
         require(timedOut == true, "Clock is still ticking");
         timedOut = false;
         teamNum = teamNumber;
-        if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
-            boyName =persons[personsIndexMap[teamNumber]].name;
-            if(persons[boyName].alive == 0) {
-                boyAlive = false;
-            } else {
-                boyAlive = true;
-            }
+        boyName = teams[teamNum].male.name;
+        girlName = teams[teamNum].female.name;
+        teams[teamNum].male.alive = rand.pseudoRandom(0,1);
+        teams[teamNum].female.alive = rand.pseudoRandom(0,1);
+        if(teams[teamNum].male.alive == 0) {
+            boyAlive = false;
         } else {
-            girlName =persons[personsIndexMap[teamNumber]].name;
-            if(persons[girlName].alive == 0) {
-                girlAlive = false;
-            } else {
-                girlAlive = true;
-            }
+            boyAlive = true;
         }
+        if(teams[teamNum].female.alive == 0) {
+            girlAlive = false;
+        } else {
+            girlAlive = true;
+        }
+        emit TimeoutEvent(teamNum, boyName, boyAlive, girlName, girlAlive);
     }
 
     function checkTeamResults(uint team) public view returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
-        require(timedOut == true, "Clock is still ticking");
+        require(checkTeamFlag == true, "Team has not been chosen yet");
+        //require(timedOut == true, "Clock is still ticking");
         teamNum = team;
-        if(persons[personsIndexMap[teamNumber]].gender == Gender.Male) {
-            boyName =persons[personsIndexMap[teamNumber]].name;
-            if(persons[boyName].alive == 0) {
-                boyAlive = false;
-            } else {
-                boyAlive = true;
-            }
+        boyName = teams[teamNum].male.name;
+        girlName = teams[teamNum].female.name;
+        if(teams[teamNum].male.alive == 0) {
+            boyAlive = false;
         } else {
-            girlName =persons[personsIndexMap[teamNumber]].name;
-            if(persons[girlName].alive == 0) {
-                girlAlive = false;
-            } else {
-                girlAlive = true;
-            }
+            boyAlive = true;
+        }
+        if(teams[teamNum].female.alive == 0) {
+            girlAlive = false;
+        } else {
+            girlAlive = true;
+        }
+    }
+
+    /// @author Denis M. Putnam
+    /// @notice Get time left
+    /// @dev No further details.
+    /// @return timeLeft
+    function getTimeLeft() view public returns (int256 timeLeft) {
+        uint256 currentTime = now;
+        if(int256((startTime + endTime) - currentTime) > 0){
+            timeLeft = int256((startTime + endTime) - currentTime);
+        } else {
+            timeLeft = 0;
         }
     }
 }
