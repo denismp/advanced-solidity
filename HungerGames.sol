@@ -39,6 +39,10 @@ contract Owned {
     }
 }
 
+/// @title Problem 5. Hunger Games
+/// @author Denis M. Putnam
+/// @notice This contract establishes the owner and allows for an owner change.
+/// @dev Use at your own risk.
 contract HungerGames is Owned {
 
     uint256 private startTime;
@@ -51,7 +55,7 @@ contract HungerGames is Owned {
     enum Gender { Male, Female }
     InsecureRandomGenerator rand = new InsecureRandomGenerator();
 
-    /// @notice Person struct of from, balance, and flag.
+    /// @notice Person struct
     struct Person {
         string name;
         uint256 age;
@@ -60,6 +64,7 @@ contract HungerGames is Owned {
         bool flag;
     }
 
+    /// @notice Team struct
     struct Team {
         uint team;
         Person male;
@@ -70,6 +75,11 @@ contract HungerGames is Owned {
 
     event AddTeamEvent(uint teamNum, string boyName, string girlName);
 
+    /// @author Denis M. Putnam
+    /// @notice Add team.  One female and one male
+    /// @dev No further details
+    /// @param boyName name of boy
+    /// @param girlName name of girl
     function add(string memory boyName, string memory girlName) public {
         teams[teamCount].male.name = boyName;
         teams[teamCount].male.age = rand.pseudoRandom(12,18);
@@ -93,6 +103,15 @@ contract HungerGames is Owned {
         return Gender(index);
     }
 
+    /// @author Denis M. Putnam
+    /// @notice getPersonInfo for the given name
+    /// @dev No further details
+    /// @param name of the person of interest
+    /// @return team
+    /// @return _player the name of the player
+    /// @return _age
+    /// @return _sex
+    /// @return _alive
     function getPersonInfo(string memory name) public view returns (uint team, string memory _player, uint256 _age, Gender _sex, uint256 _alive) {
         Person memory _male;
         Person memory _female;
@@ -116,12 +135,20 @@ contract HungerGames is Owned {
         }
     }
 
+    /// @author Denis M. Putnam
+    /// @notice getNumberOfTeams
+    /// @dev No further details
+    /// @return teamCount
     function getNumberOfTeams() public view returns(uint) {
         return teamCount;
     }
 
     event ChooseTeamEvent(uint team, string boyName, string girlName, bool timedOut, bool chooseTeamFlag, bool checkTeamFlag);
     
+    /// @author Denis M. Putnam
+    /// @notice Choose a team to play
+    /// @dev No further details
+    /// @param team number
     function chooseTeam(uint team) public {
        require(chooseTeamFlag == true, "You cannot choose a team yet");
        teamNumber = team;
@@ -154,6 +181,14 @@ contract HungerGames is Owned {
         _;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Check the life of the team
+    /// @dev No further details
+    /// @return teamNum
+    /// @return boyName
+    /// @return boyAlive
+    /// @return girlName
+    /// @return girlAlive
     function checkTeam() public checkTimeOutModifier() returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
         //emit TimeoutFlagEvent(timedOut);
         require(checkTeamFlag == true, "Team has not been chosen yet");
@@ -177,6 +212,15 @@ contract HungerGames is Owned {
         emit TimeoutEvent(teamNum, boyName, boyAlive, girlName, girlAlive);
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Check the life of the team regardless of time out.
+    /// @dev No further details
+    /// @param team number
+    /// @return teamNum
+    /// @return boyName
+    /// @return boyAlive
+    /// @return girlName
+    /// @return girlAlive
     function checkTeamResults(uint team) public view returns(uint teamNum, string memory boyName, bool boyAlive, string memory girlName, bool girlAlive) {
         require(checkTeamFlag == true, "Team has not been chosen yet");
         //require(timedOut == true, "Clock is still ticking");
@@ -209,9 +253,19 @@ contract HungerGames is Owned {
     }
 }
 
+/// @title Problem 5. InsecureRandomGenerator
+/// @author Denis M. Putnam
+/// @notice This contract establishes the owner and allows for an owner change.
+/// @dev Use at your own risk.
 contract InsecureRandomGenerator {
     bytes32 public randseed;
 
+    /// @author Denis M. Putnam
+    /// @notice Generate a pseudo random number
+    /// @dev No further details
+    /// @param start number
+    /// @param end number
+    /// @return randVal
     function pseudoRandom(uint start, uint end) public returns (uint256) {
         randseed = keccak256(abi.encodePacked( randseed, block.timestamp, block.coinbase, block.difficulty, block.number));
         uint range = end - start + 1;
