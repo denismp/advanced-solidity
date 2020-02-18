@@ -48,7 +48,7 @@ contract PetSanctuary is Owned {
 
     /// @notice Person struct
     struct Person {
-        string name;
+        address name;
         uint256 age;
         Gender gender;
         bool flag;
@@ -70,15 +70,15 @@ contract PetSanctuary is Owned {
 
     /// @notice PersonAnimal struct
     struct PersonAnimal {
-        Person adoptee;
+        Person person;
         Animal animal;
+        uint count;
         uint256 timeBought;
         bool flag;
     }
     mapping(uint => SanctuaryAnimal) private sanctuaryAnimalMap;
-    //mapping(string => uint) private animalKindToAnimalMap;
     mapping(uint => PersonAnimal) private personAnimalMap;
-    mapping(string => uint) private personToAnimalMap;
+    //mapping(string => uint) private personToAnimalMap;
 
     struct IndexToAnimal {
         uint index;
@@ -88,6 +88,7 @@ contract PetSanctuary is Owned {
     IndexToAnimal[] private indexToAnimalAr;
 
     uint private sanctuaryIndex = 0;
+    uint private personAnimalIndex = 0;
 
     event AddAnimalEvent(uint index, string animalKind, uint howMany);
 
@@ -121,7 +122,54 @@ contract PetSanctuary is Owned {
     }    
 
     function buy(uint personAge, uint personGender, string memory animalKind) public {
+        require(personGender == 0 || personGender == 1, "gender is 0 for male and 1 for female");
+        AnimalKind _animalKind = getAnimalKind(animalKind);
+        require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot, "animal kind is not supported");
+        require(getPersonAnimalCount(msg.sender, personAnimalIndex) == 0,"Only one animal allowed for life");
 
+        string memory animalKindName = getAnimalKindName(_animalKind);
+        uint _sanctuaryIndex = getAnimalKindIndex(animalKindName);
+        uint animalCount = sanctuaryAnimalMap[_sanctuaryIndex].count;
+
+        if(getGender(personGender) == Gender.Male && (_animalKind == AnimalKind.Dog || _animalKind == AnimalKind.Fish)) {
+            personAnimalMap[personAnimalIndex].person.name = msg.sender;
+            personAnimalMap[personAnimalIndex].person.age = personAge;
+            personAnimalMap[personAnimalIndex].person.gender = Gender.Male;
+            personAnimalMap[personAnimalIndex].flag = true;
+            personAnimalMap[personAnimalIndex].timeBought = now;
+            personAnimalMap[personAnimalIndex].animal.animalKind = _animalKind;
+            personAnimalMap[personAnimalIndex].animal.animalKindName = animalKindName;
+            personAnimalMap[personAnimalIndex].animal.flag = true;
+            if(animalCount > 0) {
+                sanctuaryAnimalMap[_sanctuaryIndex].count--;
+            }
+        }
+        if(getGender(personGender) == Gender.Female && personAge < 40 && _animalKind != AnimalKind.Cat) {
+            personAnimalMap[personAnimalIndex].person.name = msg.sender;
+            personAnimalMap[personAnimalIndex].person.age = personAge;
+            personAnimalMap[personAnimalIndex].person.gender = Gender.Female;
+            personAnimalMap[personAnimalIndex].flag = true;
+            personAnimalMap[personAnimalIndex].timeBought = now;
+            personAnimalMap[personAnimalIndex].animal.animalKind = _animalKind;
+            personAnimalMap[personAnimalIndex].animal.animalKindName = animalKindName;
+            personAnimalMap[personAnimalIndex].animal.flag = true;
+            if(animalCount > 0) {
+                sanctuaryAnimalMap[_sanctuaryIndex].count--;
+            }
+        }
+        if(getGender(personGender) == Gender.Female && personAge >= 40) {
+            personAnimalMap[personAnimalIndex].person.name = msg.sender;
+            personAnimalMap[personAnimalIndex].person.age = personAge;
+            personAnimalMap[personAnimalIndex].person.gender = Gender.Female;
+            personAnimalMap[personAnimalIndex].flag = true;
+            personAnimalMap[personAnimalIndex].timeBought = now;
+            personAnimalMap[personAnimalIndex].animal.animalKind = _animalKind;
+            personAnimalMap[personAnimalIndex].animal.animalKindName = animalKindName;
+            personAnimalMap[personAnimalIndex].animal.flag = true;
+            if(animalCount > 0) {
+                sanctuaryAnimalMap[_sanctuaryIndex].count--;
+            }
+        }
     }
 
     function giveBack(string memory animalKind) public {
@@ -166,16 +214,13 @@ contract PetSanctuary is Owned {
         return 0;
     }
 
-    // function getAnimalKindCount(string memory animalKind) public view returns (uint) {
-    //     AnimalKind _animalKind = getAnimalKind(animalKind);
-    //     string memory _animalKindName = getAnimalKindName(_animalKind);
-    //     uint index = animalKindToAnimalMap[_animalKindName];
-    //     bool exists = sanctuaryAnimalMap[index].flag;
-    //     if(exists == true) {
-    //         return sanctuaryAnimalMap[index].count; 
-    //     }
-    //     return 0;
-    // }
+    function getPersonAnimalCount(address name, uint index) public view returns (uint) {
+        if(personAnimalMap[index].person.name == name) {
+            return personAnimalMap[index].count; 
+        }
+        return 0;
+    }
+
     function getAnimalKindCount(string memory animalKind) public view returns (uint) {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         string memory _animalKindName = getAnimalKindName(_animalKind);
@@ -185,6 +230,16 @@ contract PetSanctuary is Owned {
             }
         }
         return 0;
+    }
+
+    function getAnimalKindIndex(string memory animalKind) public view returns (uint) {
+        AnimalKind _animalKind = getAnimalKind(animalKind);
+        string memory _animalKindName = getAnimalKindName(_animalKind);
+        for(uint i = 0; i < indexToAnimalAr.length; i++) {
+            if(keccak256(abi.encodePacked(indexToAnimalAr[i].name)) == keccak256(abi.encodePacked(_animalKindName))) {
+                return i;
+            }
+        }
     }
 
     //event GetAnimalKindNameEvent(string name);
