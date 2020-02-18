@@ -121,6 +121,8 @@ contract PetSanctuary is Owned {
         }
     }    
 
+    event BuyEvent(address who, uint age, uint gender, string animalKindName);
+
     function buy(uint personAge, uint personGender, string memory animalKind) public {
         require(personGender == 0 || personGender == 1, "gender is 0 for male and 1 for female");
         AnimalKind _animalKind = getAnimalKind(animalKind);
@@ -143,6 +145,7 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
+            emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge < 40 && _animalKind != AnimalKind.Cat) {
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
@@ -156,6 +159,7 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
+            emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge >= 40) {
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
@@ -169,6 +173,7 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
+            emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
     }
 
