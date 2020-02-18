@@ -72,6 +72,7 @@ contract PetSanctuary is Owned {
     struct PersonAnimal {
         Person adoptee;
         Animal animal;
+        uint256 timeBought;
         bool flag;
     }
     mapping(uint => SanctuaryAnimal) private sanctuaryAnimalMap;
@@ -97,7 +98,6 @@ contract PetSanctuary is Owned {
         require(msg.sender == owner,"You must be the owner of the sanctuary");
         _;
     }
-
 
     function add(string memory animalKind, uint numberToAdd) public checkOwnerModifier() {
         AnimalKind _animalKind = getAnimalKind(animalKind);
