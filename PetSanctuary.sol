@@ -92,7 +92,7 @@ contract PetSanctuary is Owned {
 
     event AddAnimalEvent(uint index, string animalKind, uint howMany);
 
-   /// @author Denis M. Putnam
+    /// @author Denis M. Putnam
     /// @notice This modifier checks for the team time out.
     /// @dev dead or alive is reandomly determined.
     modifier checkOwnerModifier() {
@@ -123,11 +123,18 @@ contract PetSanctuary is Owned {
 
     event BuyEvent(address who, uint age, uint gender, string animalKindName);
 
-    function buy(uint personAge, uint personGender, string memory animalKind) public {
+    /// @author Denis M. Putnam
+    /// @notice This modifier checks for the team time out.
+    /// @dev dead or alive is reandomly determined.
+    modifier buyModifier(uint personGender,string memory animalKind) {
         require(personGender == 0 || personGender == 1, "gender is 0 for male and 1 for female");
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot, "animal kind is not supported");
         require(getPersonAnimalCount(msg.sender, personAnimalIndex) == 0,"Only one animal allowed for life");
+        _;
+    }
+    function buy(uint personAge, uint personGender, string memory animalKind) public buyModifier(personGender,animalKind){
+        AnimalKind _animalKind = getAnimalKind(animalKind);
 
         string memory animalKindName = getAnimalKindName(_animalKind);
         uint _sanctuaryIndex = getAnimalKindIndex(animalKindName);
