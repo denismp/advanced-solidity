@@ -1,4 +1,6 @@
 pragma solidity >=0.4.22 <0.6.2;
+pragma experimental ABIEncoderV2; // This is experimental.  don't use in main net.
+// https://blog.ethereum.org/2019/03/26/solidity-optimizer-and-abiencoderv2-bug/
 
 /// @title Problem 4.	Owned contract
 /// @author Denis M. Putnam
@@ -73,9 +75,16 @@ contract PetSanctuary is Owned {
         bool flag;
     }
     mapping(uint => SanctuaryAnimal) private sanctuaryAnimalMap;
-    //mapping(string,uint) private animalKindToAnimalMap;
+    //mapping(string => uint) private animalKindToAnimalMap;
     mapping(uint => PersonAnimal) private personAnimalMap;
     mapping(string => uint) private personToAnimalMap;
+
+    struct IndexToAnimal {
+        uint index;
+        string name;
+    }
+
+    IndexToAnimal[] private indexToAnimalAr;
 
     uint private sanctuaryIndex = 0;
 
@@ -89,20 +98,27 @@ contract PetSanctuary is Owned {
         _;
     }
 
+
     function add(string memory animalKind, uint numberToAdd) public checkOwnerModifier() {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot,"Invalid animal kind");
-        if(getAnimalKindCount(_animalKind) == 0) {
+        if(getAnimalKindCount(_animalKind, sanctuaryIndex) == 0) {
+            string memory _animalKindName = getAnimalKindName(_animalKind);
             sanctuaryAnimalMap[sanctuaryIndex].animal.animalKind = _animalKind;
             sanctuaryAnimalMap[sanctuaryIndex].animal.animalKindName = getAnimalKindName(_animalKind);
             sanctuaryAnimalMap[sanctuaryIndex].animal.flag = true;
             sanctuaryAnimalMap[sanctuaryIndex].count = numberToAdd;
+            //animalKindToAnimalMap[_animalKindName] = sanctuaryIndex;
+            IndexToAnimal memory i2a;
+            i2a.index = sanctuaryIndex;
+            i2a.name = _animalKindName;
+            indexToAnimalAr.push(i2a);
+            emit AddAnimalEvent(sanctuaryIndex,_animalKindName,numberToAdd);
             sanctuaryIndex++; 
         } else {
-            sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(_animalKind) + numberToAdd;
+            sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(_animalKind,sanctuaryIndex) + numberToAdd;
         }
     }    
-
 
     function buy(uint personAge, uint personGender, string memory animalKind) public {
 
@@ -117,7 +133,7 @@ contract PetSanctuary is Owned {
         return Gender(index);
     }
 
-    function getAnimalKind(uint256 index) public pure returns(AnimalKind) {
+    function getAnimalKind(uint256 index) private pure returns(AnimalKind) {
         require( index >= 0 && index < 4, "argument must be between 0 and 4");
         return AnimalKind(index);
     }
@@ -141,28 +157,62 @@ contract PetSanctuary is Owned {
         return AnimalKind.Invalid;
     }
 
-    function getAnimalKindCount(AnimalKind animalKind) public view returns (uint) {
-        if(sanctuaryAnimalMap[sanctuaryIndex].animal.animalKind == animalKind) {
-            return sanctuaryAnimalMap[sanctuaryIndex].count; 
+    event AnimalKindCountEvent(uint debug, string animalKind, uint sanctuaryIndex, bool flag, uint count);
+    
+    function getAnimalKindCount(AnimalKind animalKind, uint index) public view returns (uint) {
+        if(sanctuaryAnimalMap[index].animal.animalKind == animalKind) {
+            return sanctuaryAnimalMap[index].count; 
         }
         return 0;
     }
 
+    // function getAnimalKindCount(string memory animalKind) public view returns (uint) {
+    //     AnimalKind _animalKind = getAnimalKind(animalKind);
+    //     string memory _animalKindName = getAnimalKindName(_animalKind);
+    //     uint index = animalKindToAnimalMap[_animalKindName];
+    //     bool exists = sanctuaryAnimalMap[index].flag;
+    //     if(exists == true) {
+    //         return sanctuaryAnimalMap[index].count; 
+    //     }
+    //     return 0;
+    // }
+    function getAnimalKindCount(string memory animalKind) public view returns (uint) {
+        AnimalKind _animalKind = getAnimalKind(animalKind);
+        string memory _animalKindName = getAnimalKindName(_animalKind);
+        for(uint i = 0; i < indexToAnimalAr.length; i++) {
+            if(keccak256(abi.encodePacked(indexToAnimalAr[i].name)) == keccak256(abi.encodePacked(_animalKindName))) {
+                return sanctuaryAnimalMap[i].count;
+            }
+        }
+        return 0;
+    }
+
+    //event GetAnimalKindNameEvent(string name);
     function getAnimalKindName(AnimalKind animalKind) public pure returns (string memory) {
         if(animalKind == AnimalKind.Fish) {
+            //emit GetAnimalKindNameEvent("Fish");
             return "Fish";
         }
         if(animalKind == AnimalKind.Cat) {
+            //emit GetAnimalKindNameEvent("Cat");
             return "Cat";
         }
         if(animalKind == AnimalKind.Dog) {
+            //emit GetAnimalKindNameEvent("Dog");
             return "Dog";
         }
         if(animalKind == AnimalKind.Rabbit) {
+            //emit GetAnimalKindNameEvent("Rabbit");
             return "Rabbit";
         }
         if(animalKind == AnimalKind.Parrot) {
+            //emit GetAnimalKindNameEvent("Parrot");
             return "Parrot";
         }
+        //emit GetAnimalKindNameEvent("Nothing");
+    }
+
+    function getI2A() view public returns (IndexToAnimal[] memory toAnimalAr) {
+       return indexToAnimalAr;
     }
 }
