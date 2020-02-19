@@ -109,7 +109,6 @@ contract PetSanctuary is Owned {
     function add(string memory animalKind, uint numberToAdd) public checkOwnerModifier() {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot,"Invalid animal kind");
-        //if(getAnimalKindCount(_animalKind, sanctuaryIndex) == 0) {
         if(getAnimalKindCount(animalKind) == 0) {
             sanctuaryIndex++;
             string memory _animalKindName = getAnimalKindName(_animalKind);
@@ -269,13 +268,6 @@ contract PetSanctuary is Owned {
         }
         return AnimalKind.Invalid;
     }
-
-    // function getAnimalKindCount(AnimalKind animalKind, int index) internal view returns (int) {
-    //     if(sanctuaryAnimalMap[index].animal.animalKind == animalKind) {
-    //         return sanctuaryAnimalMap[index].count; 
-    //     }
-    //     return -1;
-    // }
 
     function getAnimalKindCount(string memory animalKind) public view returns (int) {
         AnimalKind _animalKind = getAnimalKind(animalKind);
