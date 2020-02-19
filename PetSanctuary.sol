@@ -122,12 +122,12 @@ contract PetSanctuary is Owned {
             indexToAnimalAr.push(i2a);
             emit AddAnimalEvent(sanctuaryIndex,_animalKindName,numberToAdd);
         } else {
-            //sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(_animalKind,sanctuaryIndex) + int(numberToAdd);
             sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(animalKind) + int(numberToAdd);
         }
     }    
 
     event BuyEvent(address who, uint age, uint gender, string animalKindName);
+    event BuyFailureEvent(address who, uint age, uint gender, string animalKindName);
 
     /// @author Denis M. Putnam
     /// @notice This modifier checks for the team time out.
@@ -144,9 +144,11 @@ contract PetSanctuary is Owned {
 
         string memory animalKindName = getAnimalKindName(_animalKind);
         int _sanctuaryIndex = getAnimalKindIndex(animalKindName);
-        int animalCount = sanctuaryAnimalMap[_sanctuaryIndex].count;
+        //int animalCount = sanctuaryAnimalMap[_sanctuaryIndex].count;
+        bool boughtFlag = false;
 
         if(getGender(personGender) == Gender.Male && (_animalKind == AnimalKind.Dog || _animalKind == AnimalKind.Fish)) {
+            boughtFlag = true;
             personAnimalIndex++;
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
             personAnimalMap[personAnimalIndex].person.age = personAge;
@@ -156,7 +158,7 @@ contract PetSanctuary is Owned {
             personAnimalMap[personAnimalIndex].animal.animalKind = _animalKind;
             personAnimalMap[personAnimalIndex].animal.animalKindName = animalKindName;
             personAnimalMap[personAnimalIndex].animal.flag = true;
-            if(animalCount > 0) {
+            if(sanctuaryAnimalMap[_sanctuaryIndex].count > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
             IndexToPerson memory i2a;
@@ -166,6 +168,7 @@ contract PetSanctuary is Owned {
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge < 40 && _animalKind != AnimalKind.Cat) {
+            boughtFlag = true;
             personAnimalIndex++;
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
             personAnimalMap[personAnimalIndex].person.age = personAge;
@@ -175,7 +178,7 @@ contract PetSanctuary is Owned {
             personAnimalMap[personAnimalIndex].animal.animalKind = _animalKind;
             personAnimalMap[personAnimalIndex].animal.animalKindName = animalKindName;
             personAnimalMap[personAnimalIndex].animal.flag = true;
-            if(animalCount > 0) {
+            if(sanctuaryAnimalMap[_sanctuaryIndex].count > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
             IndexToPerson memory i2a;
@@ -185,6 +188,7 @@ contract PetSanctuary is Owned {
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge >= 40) {
+            boughtFlag = true;
             personAnimalIndex++;
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
             personAnimalMap[personAnimalIndex].person.age = personAge;
@@ -194,7 +198,7 @@ contract PetSanctuary is Owned {
             personAnimalMap[personAnimalIndex].animal.animalKind = _animalKind;
             personAnimalMap[personAnimalIndex].animal.animalKindName = animalKindName;
             personAnimalMap[personAnimalIndex].animal.flag = true;
-            if(animalCount > 0) {
+            if(sanctuaryAnimalMap[_sanctuaryIndex].count > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
             IndexToPerson memory i2a;
@@ -202,6 +206,9 @@ contract PetSanctuary is Owned {
             i2a.personAddress = msg.sender;
             indexToPersonAr.push(i2a);
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
+        }
+        if(boughtFlag == false) {
+            emit BuyFailureEvent(msg.sender, personAge, personGender, animalKind);
         }
     }
 
