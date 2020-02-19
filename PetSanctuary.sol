@@ -106,6 +106,11 @@ contract PetSanctuary is Owned {
         _;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice add an animal
+    /// @param animalKind string name of the animal kind
+    /// @param numberToAdd number of animals of the given kind to add
+    /// @dev no other details
     function add(string memory animalKind, uint numberToAdd) public checkOwnerModifier() {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot,"Invalid animal kind");
@@ -139,6 +144,13 @@ contract PetSanctuary is Owned {
         require(isBought() == false, "Only one animal allowed for life"); 
         _;
     }
+
+    /// @author Denis M. Putnam
+    /// @notice buy an animal
+    /// @param personAge age of person
+    /// @param personGender gender of person
+    /// @param animalKind string name of the animal kind
+    /// @dev no other details
     function buy(uint personAge, uint personGender, string memory animalKind) public buyModifier(personGender,animalKind){
         AnimalKind _animalKind = getAnimalKind(animalKind);
 
@@ -214,6 +226,10 @@ contract PetSanctuary is Owned {
 
     event TimeoutEvent(address who, string animalKindName);
 
+    /// @author Denis M. Putnam
+    /// @notice give back the animal
+    /// @param animalKind string name of the animal kind
+    /// @dev no other details
     function giveBack(string memory animalKind) public {
         int _personIndex = getPersonAnimalIndex(); 
         AnimalKind _animalKind = getAnimalKind(animalKind); // convert string animalKind to enum
@@ -230,6 +246,10 @@ contract PetSanctuary is Owned {
         sanctuaryAnimalMap[_animalIndex].count++;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice determine if the animal has been bought
+    /// @dev no other details
+    /// @return true of false
     function isBought() public view returns (bool) {
         int _index = getPersonAnimalIndex();
         if(_index != -1 && personAnimalMap[_index].flag == true) {
@@ -238,6 +258,10 @@ contract PetSanctuary is Owned {
         return false;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the index of the person to animal mapping
+    /// @dev no other details
+    /// @return index
     function getPersonAnimalIndex() public view returns (int) {
         for(uint i = 0; i < indexToPersonAr.length; i++) {
             if(indexToPersonAr[i].personAddress == msg.sender) {
@@ -247,16 +271,31 @@ contract PetSanctuary is Owned {
         return -1;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the gender
+    /// @param index into the gender enum
+    /// @dev no other details
+    /// @return Gender
     function getGender(uint256 index) public pure returns(Gender) {
         require( index == 0 || index == 1, "argument must be 0 or 1");
         return Gender(index);
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the AnimalKind enum
+    /// @param index into the AnimalKind enum
+    /// @dev no other details
+    /// @return AnimalKind
     function getAnimalKind(uint256 index) private pure returns(AnimalKind) {
         require( index >= 0 && index < 4, "argument must be between 0 and 4");
         return AnimalKind(index);
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the AnimalKind enum
+    /// @param name of the animal kind
+    /// @dev no other details
+    /// @return AnimalKind
     function getAnimalKind(string memory name) public pure returns (AnimalKind) {
         if(keccak256(abi.encodePacked(name)) == keccak256(abi.encodePacked("Fish")) || keccak256(abi.encodePacked(name)) == keccak256(abi.encodePacked("fish"))) {
            return AnimalKind.Fish;
@@ -276,6 +315,11 @@ contract PetSanctuary is Owned {
         return AnimalKind.Invalid;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the AnimalKind count
+    /// @param animalKind name of the animal kind
+    /// @dev no other details
+    /// @return count
     function getAnimalKindCount(string memory animalKind) public view returns (int) {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         string memory _animalKindName = getAnimalKindName(_animalKind);
@@ -287,6 +331,11 @@ contract PetSanctuary is Owned {
         return 0;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the index of the animal kind in the sancturary
+    /// @param animalKind name of the animal kind
+    /// @dev no other details
+    /// @return index
     function getAnimalKindIndex(string memory animalKind) public view returns (int) {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         string memory _animalKindName = getAnimalKindName(_animalKind);
@@ -298,6 +347,11 @@ contract PetSanctuary is Owned {
         return -1;
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the index of the animal kind in the sancturary
+    /// @param animalKind enum of animal kind
+    /// @dev no other details
+    /// @return string of animal kind
     function getAnimalKindName(AnimalKind animalKind) public pure returns (string memory) {
         if(animalKind == AnimalKind.Fish) {
             return "Fish";
@@ -316,6 +370,10 @@ contract PetSanctuary is Owned {
         }
     }
 
+    /// @author Denis M. Putnam
+    /// @notice Get the array animal in the sancturary
+    /// @dev no other details
+    /// @return toAnimalAr
     function getI2A() view public returns (IndexToAnimal[] memory toAnimalAr) {
        return indexToAnimalAr;
     }
