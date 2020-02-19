@@ -64,7 +64,7 @@ contract PetSanctuary is Owned {
     /// @notice SanctuaryAnimal struct
     struct SanctuaryAnimal {
         Animal animal;
-        uint count;
+        int count;
         bool flag;
     }
 
@@ -72,26 +72,31 @@ contract PetSanctuary is Owned {
     struct PersonAnimal {
         Person person;
         Animal animal;
-        uint count;
+        int count;
         uint256 timeBought;
         bool flag;
     }
-    mapping(uint => SanctuaryAnimal) private sanctuaryAnimalMap;
-    mapping(uint => PersonAnimal) private personAnimalMap;
-    mapping(address => uint) private personMap; // person address to personAnimalIndex map
+    mapping(int => SanctuaryAnimal) private sanctuaryAnimalMap;
+    mapping(int => PersonAnimal) private personAnimalMap;
     uint256 private endTime = 5 minutes;
 
     struct IndexToAnimal {
-        uint index;
+        int index;
         string name;
     }
 
+    struct IndexToPerson {
+        int index;
+        address personAddress;
+    }
+
     IndexToAnimal[] private indexToAnimalAr;
+    IndexToPerson[] private indexToPersonAr;
 
-    uint private sanctuaryIndex = 0;
-    uint private personAnimalIndex = 0;
+    int private sanctuaryIndex = -1;
+    int private personAnimalIndex = -1;
 
-    event AddAnimalEvent(uint index, string animalKind, uint howMany);
+    event AddAnimalEvent(int index, string animalKind, uint howMany);
 
     /// @author Denis M. Putnam
     /// @notice This modifier checks for the team time out.
@@ -104,21 +109,22 @@ contract PetSanctuary is Owned {
     function add(string memory animalKind, uint numberToAdd) public checkOwnerModifier() {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot,"Invalid animal kind");
-        if(getAnimalKindCount(_animalKind, sanctuaryIndex) == 0) {
+        //if(getAnimalKindCount(_animalKind, sanctuaryIndex) == 0) {
+        if(getAnimalKindCount(animalKind) == 0) {
+            sanctuaryIndex++;
             string memory _animalKindName = getAnimalKindName(_animalKind);
             sanctuaryAnimalMap[sanctuaryIndex].animal.animalKind = _animalKind;
             sanctuaryAnimalMap[sanctuaryIndex].animal.animalKindName = getAnimalKindName(_animalKind);
             sanctuaryAnimalMap[sanctuaryIndex].animal.flag = true;
-            sanctuaryAnimalMap[sanctuaryIndex].count = numberToAdd;
-            //animalKindToAnimalMap[_animalKindName] = sanctuaryIndex;
+            sanctuaryAnimalMap[sanctuaryIndex].count = int(numberToAdd);
             IndexToAnimal memory i2a;
             i2a.index = sanctuaryIndex;
             i2a.name = _animalKindName;
             indexToAnimalAr.push(i2a);
             emit AddAnimalEvent(sanctuaryIndex,_animalKindName,numberToAdd);
-            sanctuaryIndex++; 
         } else {
-            sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(_animalKind,sanctuaryIndex) + numberToAdd;
+            //sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(_animalKind,sanctuaryIndex) + int(numberToAdd);
+            sanctuaryAnimalMap[sanctuaryIndex].count = getAnimalKindCount(animalKind) + int(numberToAdd);
         }
     }    
 
@@ -131,18 +137,18 @@ contract PetSanctuary is Owned {
         require(personGender == 0 || personGender == 1, "gender is 0 for male and 1 for female");
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot, "animal kind is not supported");
-        require(getPersonAnimalCount(msg.sender, personAnimalIndex) == 0,"Only one animal allowed for life");
-        require(isBought() == false, "Only one animal allowed for life"); // may not need this
+        require(isBought() == false, "Only one animal allowed for life"); 
         _;
     }
     function buy(uint personAge, uint personGender, string memory animalKind) public buyModifier(personGender,animalKind){
         AnimalKind _animalKind = getAnimalKind(animalKind);
 
         string memory animalKindName = getAnimalKindName(_animalKind);
-        uint _sanctuaryIndex = getAnimalKindIndex(animalKindName);
-        uint animalCount = sanctuaryAnimalMap[_sanctuaryIndex].count;
+        int _sanctuaryIndex = getAnimalKindIndex(animalKindName);
+        int animalCount = sanctuaryAnimalMap[_sanctuaryIndex].count;
 
         if(getGender(personGender) == Gender.Male && (_animalKind == AnimalKind.Dog || _animalKind == AnimalKind.Fish)) {
+            personAnimalIndex++;
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
             personAnimalMap[personAnimalIndex].person.age = personAge;
             personAnimalMap[personAnimalIndex].person.gender = Gender.Male;
@@ -154,12 +160,14 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
-            //mapping(address => uint) private personMap; // person address to personAnimalIndex map
-            personMap[msg.sender] = personAnimalIndex;
-            personAnimalIndex++;
+            IndexToPerson memory i2a;
+            i2a.index = personAnimalIndex;
+            i2a.personAddress = msg.sender;
+            indexToPersonAr.push(i2a);
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge < 40 && _animalKind != AnimalKind.Cat) {
+            personAnimalIndex++;
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
             personAnimalMap[personAnimalIndex].person.age = personAge;
             personAnimalMap[personAnimalIndex].person.gender = Gender.Female;
@@ -171,11 +179,14 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
-            personMap[msg.sender] = personAnimalIndex;
-            personAnimalIndex++;
+            IndexToPerson memory i2a;
+            i2a.index = personAnimalIndex;
+            i2a.personAddress = msg.sender;
+            indexToPersonAr.push(i2a);
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge >= 40) {
+            personAnimalIndex++;
             personAnimalMap[personAnimalIndex].person.name = msg.sender;
             personAnimalMap[personAnimalIndex].person.age = personAge;
             personAnimalMap[personAnimalIndex].person.gender = Gender.Female;
@@ -187,8 +198,10 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
-            personMap[msg.sender] = personAnimalIndex;
-            personAnimalIndex++;
+            IndexToPerson memory i2a;
+            i2a.index = personAnimalIndex;
+            i2a.personAddress = msg.sender;
+            indexToPersonAr.push(i2a);
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
     }
@@ -196,10 +209,10 @@ contract PetSanctuary is Owned {
     event TimeoutEvent(address who, string animalKindName);
 
     function giveBack(string memory animalKind) public {
-        uint _personIndex = getPersonAnimalIndex(); 
+        int _personIndex = getPersonAnimalIndex(); 
         AnimalKind _animalKind = getAnimalKind(animalKind); // convert string animalKind to enum
         string memory animalKindName = getAnimalKindName(_animalKind); // now get the real animalKindName
-        uint _animalIndex = getAnimalKindIndex(animalKindName); // get the index for the sanctuary
+        int _animalIndex = getAnimalKindIndex(animalKindName); // get the index for the sanctuary
 
         // See if the person's time has run out.
         uint256 currentTime = now;
@@ -212,15 +225,20 @@ contract PetSanctuary is Owned {
     }
 
     function isBought() public view returns (bool) {
-        uint _index = personMap[msg.sender];
-        if(personAnimalMap[_index].flag == true) {
+        int _index = getPersonAnimalIndex();
+        if(_index != -1 && personAnimalMap[_index].flag == true) {
             return true;
         }
         return false;
     }
 
-    function getPersonAnimalIndex() public view returns (uint) {
-        return personMap[msg.sender]; 
+    function getPersonAnimalIndex() public view returns (int) {
+        for(uint i = 0; i < indexToPersonAr.length; i++) {
+            if(indexToPersonAr[i].personAddress == msg.sender) {
+                return indexToPersonAr[i].index;
+            }
+        } 
+        return -1;
     }
 
     function getGender(uint256 index) public pure returns(Gender) {
@@ -252,66 +270,51 @@ contract PetSanctuary is Owned {
         return AnimalKind.Invalid;
     }
 
-    event AnimalKindCountEvent(uint debug, string animalKind, uint sanctuaryIndex, bool flag, uint count);
-    
-    function getAnimalKindCount(AnimalKind animalKind, uint index) public view returns (uint) {
-        if(sanctuaryAnimalMap[index].animal.animalKind == animalKind) {
-            return sanctuaryAnimalMap[index].count; 
-        }
-        return 0;
-    }
+    // function getAnimalKindCount(AnimalKind animalKind, int index) internal view returns (int) {
+    //     if(sanctuaryAnimalMap[index].animal.animalKind == animalKind) {
+    //         return sanctuaryAnimalMap[index].count; 
+    //     }
+    //     return -1;
+    // }
 
-    function getPersonAnimalCount(address name, uint index) public view returns (uint) {
-        if(personAnimalMap[index].person.name == name) {
-            return personAnimalMap[index].count; 
-        }
-        return 0;
-    }
-
-    function getAnimalKindCount(string memory animalKind) public view returns (uint) {
+    function getAnimalKindCount(string memory animalKind) public view returns (int) {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         string memory _animalKindName = getAnimalKindName(_animalKind);
         for(uint i = 0; i < indexToAnimalAr.length; i++) {
             if(keccak256(abi.encodePacked(indexToAnimalAr[i].name)) == keccak256(abi.encodePacked(_animalKindName))) {
-                return sanctuaryAnimalMap[i].count;
+                return sanctuaryAnimalMap[int(i)].count;
             }
         }
         return 0;
     }
 
-    function getAnimalKindIndex(string memory animalKind) public view returns (uint) {
+    function getAnimalKindIndex(string memory animalKind) public view returns (int) {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         string memory _animalKindName = getAnimalKindName(_animalKind);
         for(uint i = 0; i < indexToAnimalAr.length; i++) {
             if(keccak256(abi.encodePacked(indexToAnimalAr[i].name)) == keccak256(abi.encodePacked(_animalKindName))) {
-                return i;
+                return int(i);
             }
         }
+        return -1;
     }
 
-    //event GetAnimalKindNameEvent(string name);
     function getAnimalKindName(AnimalKind animalKind) public pure returns (string memory) {
         if(animalKind == AnimalKind.Fish) {
-            //emit GetAnimalKindNameEvent("Fish");
             return "Fish";
         }
         if(animalKind == AnimalKind.Cat) {
-            //emit GetAnimalKindNameEvent("Cat");
             return "Cat";
         }
         if(animalKind == AnimalKind.Dog) {
-            //emit GetAnimalKindNameEvent("Dog");
             return "Dog";
         }
         if(animalKind == AnimalKind.Rabbit) {
-            //emit GetAnimalKindNameEvent("Rabbit");
             return "Rabbit";
         }
         if(animalKind == AnimalKind.Parrot) {
-            //emit GetAnimalKindNameEvent("Parrot");
             return "Parrot";
         }
-        //emit GetAnimalKindNameEvent("Nothing");
     }
 
     function getI2A() view public returns (IndexToAnimal[] memory toAnimalAr) {
