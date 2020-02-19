@@ -78,7 +78,8 @@ contract PetSanctuary is Owned {
     }
     mapping(uint => SanctuaryAnimal) private sanctuaryAnimalMap;
     mapping(uint => PersonAnimal) private personAnimalMap;
-    //mapping(string => uint) private personToAnimalMap;
+    mapping(address => uint) private personMap; // person address to personAnimalIndex map
+    uint256 private endTime = 5 minutes;
 
     struct IndexToAnimal {
         uint index;
@@ -131,6 +132,7 @@ contract PetSanctuary is Owned {
         AnimalKind _animalKind = getAnimalKind(animalKind);
         require(_animalKind >= AnimalKind.Fish && _animalKind <= AnimalKind.Parrot, "animal kind is not supported");
         require(getPersonAnimalCount(msg.sender, personAnimalIndex) == 0,"Only one animal allowed for life");
+        require(isBought() == false, "Only one animal allowed for life"); // may not need this
         _;
     }
     function buy(uint personAge, uint personGender, string memory animalKind) public buyModifier(personGender,animalKind){
@@ -152,6 +154,9 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
+            //mapping(address => uint) private personMap; // person address to personAnimalIndex map
+            personMap[msg.sender] = personAnimalIndex;
+            personAnimalIndex++;
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge < 40 && _animalKind != AnimalKind.Cat) {
@@ -166,6 +171,8 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
+            personMap[msg.sender] = personAnimalIndex;
+            personAnimalIndex++;
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
         if(getGender(personGender) == Gender.Female && personAge >= 40) {
@@ -180,12 +187,40 @@ contract PetSanctuary is Owned {
             if(animalCount > 0) {
                 sanctuaryAnimalMap[_sanctuaryIndex].count--;
             }
+            personMap[msg.sender] = personAnimalIndex;
+            personAnimalIndex++;
             emit BuyEvent(msg.sender, personAge, personGender, animalKindName);
         }
     }
 
+    event TimeoutEvent(address who, string animalKindName);
+
     function giveBack(string memory animalKind) public {
-        
+        uint _personIndex = getPersonAnimalIndex(); 
+        AnimalKind _animalKind = getAnimalKind(animalKind); // convert string animalKind to enum
+        string memory animalKindName = getAnimalKindName(_animalKind); // now get the real animalKindName
+        uint _animalIndex = getAnimalKindIndex(animalKindName); // get the index for the sanctuary
+
+        // See if the person's time has run out.
+        uint256 currentTime = now;
+        if(currentTime > personAnimalMap[_personIndex].timeBought + endTime) {
+            emit TimeoutEvent(msg.sender, animalKindName);
+            return;
+        }
+        personAnimalMap[_personIndex].count = 0;
+        sanctuaryAnimalMap[_animalIndex].count++;
+    }
+
+    function isBought() public view returns (bool) {
+        uint _index = personMap[msg.sender];
+        if(personAnimalMap[_index].flag == true) {
+            return true;
+        }
+        return false;
+    }
+
+    function getPersonAnimalIndex() public view returns (uint) {
+        return personMap[msg.sender]; 
     }
 
     function getGender(uint256 index) public pure returns(Gender) {
