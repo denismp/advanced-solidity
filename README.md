@@ -74,3 +74,26 @@ o	after the end of the hunger game, check if the boy and girl are alive (use ran
 Use modifiers where it is appropriate.	
 Add appropriate events for the functions.
 Test and play around with the contract!
+
+Problem 7.  Pet Adoption
+ 
+In our adoption sanctuary, we have 5 kinds of animals
+•	Fish
+•	Cat
+•	Dog
+•	Rabbit
+•	Parrot
+The sanctuary will store information for all the people who have adopted a pet.
+After creating the contract, we should add the owner of the adoption sanctuary.
+Create a contract called PetSanctuary that has:
+o	function add (animalKind, howManyPieces) – only the owner can give shelter to animals in the sanctuary
+o	function buy (personAge, personGender, animalKind)
+•	save when the animal is bought
+•	you can only adopt one animal for lifetime
+•	Men can only buy dog and fish
+•	Women can buy from every kind, but if they are under 40, they are not allowed to buy a cat
+•	function giveBackAnimal(animalKind)
+•	you can give the animal back in the first 5 minutes after adoption
+o	Think about how to store people’s information in the contract.
+Use modifiers where it is appropriate.
+Add appropriate events for the functions.
